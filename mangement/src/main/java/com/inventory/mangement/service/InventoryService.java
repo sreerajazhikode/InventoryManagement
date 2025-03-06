@@ -65,9 +65,9 @@ public class InventoryService {
 
         ProductResp productOut=new ProductResp();
         productOut.setOriginalPrice(product.getBasePrice());
-        productOut.setFinalPrice(Math.round(product.getBasePrice() - discountPricePromoCode - discountPriceMinQuantity - discountPriceUserType)*100.0);
+        productOut.setFinalPrice(Math.round((product.getBasePrice() - discountPricePromoCode - discountPriceMinQuantity - discountPriceUserType)*100.00)/100.00);
         productOut.setProductId(productInfo.getProductId());
-        productOut.setTotalSavings(Math.round(discountPricePromoCode + discountPriceMinQuantity + discountPriceUserType)*100.0);
+        productOut.setTotalSavings(Math.round((discountPricePromoCode + discountPriceMinQuantity + discountPriceUserType)*100.00)/100.00);
         productOut.setAppliedDiscounts(appliedDiscount);
         return productOut;
     }
