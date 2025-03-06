@@ -3,7 +3,7 @@ package com.inventory.mangement.model;
 import lombok.Data;
 
 @Data
-public class ProductInfo {
+public class ProductReq {
     private String productId;
     private Integer quantity;
     private String promoCode;

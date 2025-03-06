@@ -3,16 +3,18 @@ package com.inventory.mangement.service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.inventory.mangement.model.Products;
-import com.inventory.mangement.model.ProductInfo;
-import com.inventory.mangement.model.ProductOut;
-import com.inventory.mangement.model.PromoCode;
-import com.inventory.mangement.model.QuantityDiscounts;
-import com.inventory.mangement.model.UserType;
+import com.inventory.mangement.entity.Products;
+import com.inventory.mangement.entity.PromoCode;
+import com.inventory.mangement.entity.QuantityDiscounts;
+import com.inventory.mangement.entity.UserType;
+import com.inventory.mangement.model.Discount;
+import com.inventory.mangement.model.ProductReq;
+import com.inventory.mangement.model.ProductResp;
 import com.inventory.mangement.repository.MinQuantityRepo;
 import com.inventory.mangement.repository.ProductRepo;
 import com.inventory.mangement.repository.PromoCodeRepo;
@@ -29,21 +31,24 @@ public class InventoryService {
     @Autowired
     UserTypeRepo userTypeRepo;
 
-    List<String> appliedDiscount= new ArrayList<>();
+    List<Discount> appliedDiscount= new ArrayList<>();
 
-    public ProductOut calculateDiscount(ProductInfo productInfo) throws Exception{
+    public ProductResp calculateDiscount(ProductReq productInfo) throws Exception{
+        appliedDiscount.clear();
         Double discountPricePromoCode=0.0, discountPriceUserType=0.0,discountPriceMinQuantity=0.0 ;
         
-        Products product = productRepository.findById(productInfo.getProductId()).orElseThrow(()->new Exception("productNotFound"));
+        Products product = productRepository.findById(productInfo.getProductId()).orElseThrow(()->new Exception("product Not Found"));
 
         if(productInfo.getQuantity() > product.getAvailableQuantity()){
-            throw new Exception("Quantity not available");
+            throw new Exception("Quantity not available, Entered quantity is more than the available quantity");
         } else {
-            if(!productInfo.getPromoCode().isBlank()){
+            if(Objects.nonNull(productInfo.getPromoCode())){
                 discountPricePromoCode = applyPromoCode(product, productInfo.getPromoCode());
-            } 
+            }  
 
-            discountPriceUserType = applyUserTypeDiscount( product, productInfo.getUserType());
+            if(Objects.nonNull(productInfo.getUserType())){
+                discountPriceUserType = applyUserTypeDiscount( product, productInfo.getUserType());
+            }
 
             if(productInfo.getQuantity()>1){
                 discountPriceMinQuantity =  applyMinQuantityDiscount( product, productInfo.getQuantity());
@@ -52,22 +57,26 @@ public class InventoryService {
             product.setAvailableQuantity(product.getAvailableQuantity()-productInfo.getQuantity());
             productRepository.save(product);
         }
-        ProductOut productOut=new ProductOut();
+
+        ProductResp productOut=new ProductResp();
         productOut.setOriginalPrice(product.getBasePrice());
         productOut.setFinalPrice(product.getBasePrice() - discountPricePromoCode - discountPriceMinQuantity - discountPriceUserType);
         productOut.setProductId(productInfo.getProductId());
         productOut.setTotalSavings(discountPricePromoCode + discountPriceMinQuantity + discountPriceUserType);
         productOut.setAppliedDiscounts(appliedDiscount);
-            
+        
         return productOut;
     }
 
     private Double applyPromoCode(Products product, String promoCode) throws Exception{
         PromoCode promoCodes = promoCodeRepo.findById(promoCode).orElseThrow(()->new Exception("PromoCode Not Fouund"));
         Double price=0.0;
-        if(promoCodes != null && promoCodes.isActive() && promoCodes.getValidUntil().isBefore(LocalDate.now())){
+        if(promoCodes != null && promoCodes.isActive() && promoCodes.getValidUntil().isAfter(LocalDate.now())){
             price = product.getBasePrice()* promoCodes.getDiscountPercentage()/100;
-            appliedDiscount.add("{\"type\": \"PROMO_CODE\", \"percentage\":"+promoCodes.getDiscountPercentage());
+            Discount discount = new Discount();
+            discount.setType("PROMO_CODE");
+            discount.setPercentage(promoCodes.getDiscountPercentage());
+            appliedDiscount.add(discount);
         }
         return price;
     }
@@ -77,7 +86,10 @@ public class InventoryService {
         Double finalPrice=0.0;
         if(userTypes != null){
             finalPrice = product.getBasePrice()* userTypes.getDiscountPercentage()/100;
-            appliedDiscount.add("{\"type\": "+userTypes.getType() +", \"percentage\":"+userTypes.getDiscountPercentage());
+            Discount discount = new Discount();
+            discount.setType(userTypes.getType());
+            discount.setPercentage(userTypes.getDiscountPercentage());
+            appliedDiscount.add(discount);
         }
         return finalPrice;
     }
@@ -87,13 +99,15 @@ public class InventoryService {
         Double discountPercentage=0.0;
         Integer existingQuantity = 0;
         for(QuantityDiscounts quantityDiscount : quantityDiscounts){
-            if(quantityDiscount.getMinQuantity() > existingQuantity && quantity > quantityDiscount.getMinQuantity()){
+            if(quantityDiscount.getMinQuantity() > existingQuantity && quantity >= quantityDiscount.getMinQuantity()){
                 discountPercentage = quantityDiscount.getDiscountPercentage();
             }
             existingQuantity = quantityDiscount.getMinQuantity();
         }
-        String stirng = "{\"type\": \"PROMO_CODE\", \"percentage\" \"" + discountPercentage;
-        appliedDiscount.add(stirng);
+        Discount discount = new Discount();
+        discount.setType("MIN_QUANTITY");
+        discount.setPercentage(discountPercentage);
+        appliedDiscount.add(discount);
     
         return (product.getBasePrice()* discountPercentage/100);
     }

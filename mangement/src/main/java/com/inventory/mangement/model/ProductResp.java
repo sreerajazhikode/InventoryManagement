@@ -5,10 +5,10 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class ProductOut {
+public class ProductResp {
     private String productId;
     private Double originalPrice;
     private Double finalPrice;
-    private List<String> appliedDiscounts;
+    private List<Discount> appliedDiscounts;
     private Double totalSavings;
 }

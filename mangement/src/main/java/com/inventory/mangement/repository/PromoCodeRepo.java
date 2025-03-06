@@ -3,7 +3,7 @@ package com.inventory.mangement.repository;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import com.inventory.mangement.model.PromoCode;
+import com.inventory.mangement.entity.PromoCode;
 @Repository
 public interface PromoCodeRepo extends CrudRepository<PromoCode, String>{
 

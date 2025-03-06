@@ -1,4 +1,4 @@
-package com.inventory.mangement.model;
+package com.inventory.mangement.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

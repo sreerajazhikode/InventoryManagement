@@ -13,9 +13,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.inventory.mangement.model.ProductInfo;
-import com.inventory.mangement.model.ProductOut;
-import com.inventory.mangement.model.Products;
+import com.inventory.mangement.entity.Products;
+import com.inventory.mangement.model.ProductReq;
+import com.inventory.mangement.model.ProductResp;
 import com.inventory.mangement.repository.MinQuantityRepo;
 import com.inventory.mangement.repository.ProductRepo;
 import com.inventory.mangement.repository.PromoCodeRepo;
@@ -36,7 +36,7 @@ public class TestInventoryService {
 
     @Test
     void testCalculateDiscount() throws Exception{
-        ProductInfo prodInfo = new ProductInfo();
+        ProductReq prodInfo = new ProductReq();
         prodInfo.setProductId("ABC123");
         prodInfo.setPromoCode("SPRING25");
         prodInfo.setQuantity(5);
