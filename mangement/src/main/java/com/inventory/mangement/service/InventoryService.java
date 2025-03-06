@@ -34,14 +34,19 @@ public class InventoryService {
     List<Discount> appliedDiscount= new ArrayList<>();
 
     public ProductResp calculateDiscount(ProductReq productInfo) throws Exception{
+
         appliedDiscount.clear();
+
         Double discountPricePromoCode=0.0, discountPriceUserType=0.0,discountPriceMinQuantity=0.0 ;
         
         Products product = productRepository.findById(productInfo.getProductId()).orElseThrow(()->new Exception("product Not Found"));
 
         if(productInfo.getQuantity() > product.getAvailableQuantity()){
+
             throw new Exception("Quantity not available, Entered quantity is more than the available quantity");
+
         } else {
+
             if(Objects.nonNull(productInfo.getPromoCode())){
                 discountPricePromoCode = applyPromoCode(product, productInfo.getPromoCode());
             }  
@@ -60,11 +65,10 @@ public class InventoryService {
 
         ProductResp productOut=new ProductResp();
         productOut.setOriginalPrice(product.getBasePrice());
-        productOut.setFinalPrice(product.getBasePrice() - discountPricePromoCode - discountPriceMinQuantity - discountPriceUserType);
+        productOut.setFinalPrice(Math.round(product.getBasePrice() - discountPricePromoCode - discountPriceMinQuantity - discountPriceUserType)*100.0);
         productOut.setProductId(productInfo.getProductId());
-        productOut.setTotalSavings(discountPricePromoCode + discountPriceMinQuantity + discountPriceUserType);
+        productOut.setTotalSavings(Math.round(discountPricePromoCode + discountPriceMinQuantity + discountPriceUserType)*100.0);
         productOut.setAppliedDiscounts(appliedDiscount);
-        
         return productOut;
     }
 
